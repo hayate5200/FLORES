@@ -7,7 +7,8 @@
             const floresOriginales = Array.from(floresContainer.querySelectorAll('.flor'));
 
             // Clonaremos aleatoriamente flores existentes para llegar a unas 35 flores
-            const totalFloresObjetivo = 35;
+            const totalFloresObjetivo = matchMedia("(max-width: 768px)").matches ? 16 : 35;
+            floresOriginales.slice(totalFloresObjetivo).forEach(flor => flor.remove());
             let currentId = floresOriginales.length + 1;
 
             while (floresContainer.children.length < totalFloresObjetivo) {
@@ -33,7 +34,7 @@
                 currentId++;
             }
 
-            const mariposasContainer = document.getElementById('mariposas');
+            const mariposasContainer = document.getElementById('mariposas'); mariposasContainer.replaceChildren();
 
             const coloresMariposas = [
                 ['#FFD700', '#FFC107', '#B8860B'],
@@ -161,7 +162,7 @@
                 mariposasContainer.appendChild(mariposaSVG);
             }
 
-            const particulasContainer = document.getElementById('particulas');
+            const particulasContainer = document.getElementById('particulas'); particulasContainer.replaceChildren();
             for (let i = 0; i < 50; i++) {
                 const particula = document.createElement('div');
                 particula.className = 'particula';
@@ -176,75 +177,32 @@
             inicializarMusica();
         });
 
-        function inicializarMusica() {
-            audio = new Audio('https://bcodestorague.anteroteobaldob.workers.dev/share/anteroteobaldob_gmail_com/AUDIO/Flores%20amarillas.mp3');
-            audio.loop = true;
-            audio.volume = 0.5;
-
-            function iniciarReproduccion() {
-                if (!estaReproduciendo) {
-                    audio.play().catch(e => {
-                        console.log('Error reproduciendo audio:', e);
-                    });
-                    estaReproduciendo = true;
-                    crearControlPausa();
-                    document.removeEventListener('click', iniciarReproduccion);
-                    document.removeEventListener('touchstart', iniciarReproduccion);
-                }
-            }
-
-            document.addEventListener('click', iniciarReproduccion);
-            document.addEventListener('touchstart', iniciarReproduccion);
-        }
-
-        function crearControlPausa() {
-            if (controlPausa) return;
-
-            controlPausa = document.createElement('div');
-            controlPausa.innerHTML = '<i class="fas fa-pause"></i>';
-            controlPausa.style.cssText = `
-                position: fixed; 
-                bottom: 30px; 
-                left: 30px; 
-                width: 60px; 
-                height: 60px;
-                background: rgba(255, 215, 0, 0.2); 
-                border: 2px solid #FFD700; 
-                border-radius: 50%;
-                display: flex; 
-                justify-content: center; 
-                align-items: center; 
-                font-size: 26px;
-                cursor: pointer; 
-                z-index: 1000; 
-                box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
-                color: #FFD700;
-                transition: all 0.3s ease;
-                backdrop-filter: blur(5px);
-            `;
-            controlPausa.addEventListener('click', toggleReproduccion);
-            controlPausa.addEventListener('mouseenter', function () {
-                this.style.transform = 'scale(1.1)';
-                this.style.boxShadow = '0 0 15px rgba(255, 215, 0, 0.8)';
-            });
-            controlPausa.addEventListener('mouseleave', function () {
-                this.style.transform = 'scale(1)';
-            });
-            document.body.appendChild(controlPausa);
-        }
-
-        function toggleReproduccion() {
-            if (estaReproduciendo) {
-                audio.pause();
-                controlPausa.innerHTML = '<i class="fas fa-play"></i>';
-                controlPausa.style.boxShadow = '0 0 5px rgba(255, 215, 0, 0.3)';
-            } else {
-                audio.play().catch(e => {
-                    console.log('Error reproduciendo audio:', e);
-                });
-                controlPausa.innerHTML = '<i class="fas fa-pause"></i>';
-                controlPausa.style.boxShadow = '0 0 20px rgba(255, 215, 0, 0.8)';
-            }
-            estaReproduciendo = !estaReproduciendo;
-        }
-    
+function inicializarMusica() {
+    audio = new Audio('https://bcodestorague.anteroteobaldob.workers.dev/share/anteroteobaldob_gmail_com/AUDIO/Flores%20amarillas.mp3');
+    audio.loop = true;
+    audio.preload = 'none';
+    controlPausa = document.createElement('button');
+    controlPausa.type = 'button';
+    controlPausa.className = 'control-musica';
+    controlPausa.textContent = '♫ Música';
+    controlPausa.setAttribute('aria-label', 'Reproducir música');
+    controlPausa.setAttribute('aria-pressed', 'false');
+    document.body.appendChild(controlPausa);
+    const actualizar = () => {
+        estaReproduciendo = !audio.paused;
+        controlPausa.textContent = estaReproduciendo ? 'Ⅱ Pausar' : '♫ Música';
+        controlPausa.setAttribute('aria-pressed', String(estaReproduciendo));
+        controlPausa.setAttribute('aria-label', estaReproduciendo ? 'Pausar música' : 'Reproducir música');
+    };
+    audio.addEventListener('play', actualizar);
+    audio.addEventListener('pause', actualizar);
+    controlPausa.addEventListener('click', async () => {
+        if (!audio.paused) { audio.pause(); return; }
+        controlPausa.disabled = true;
+        try { await audio.play(); }
+        catch (error) {
+            controlPausa.textContent = '♫ Reintentar';
+            controlPausa.setAttribute('aria-label', 'No se pudo cargar la música. Toca para reintentar');
+        } finally { controlPausa.disabled = false; }
+    });
+}
