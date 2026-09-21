@@ -181,6 +181,9 @@ function inicializarMusica() {
     audio = new Audio('https://bcodestorague.anteroteobaldob.workers.dev/share/anteroteobaldob_gmail_com/AUDIO/Flores%20amarillas.mp3');
     audio.loop = true;
     audio.preload = 'none';
+    audio.id = 'musica-fondo';
+    audio.hidden = true;
+    document.body.appendChild(audio);
     controlPausa = document.createElement('button');
     controlPausa.type = 'button';
     controlPausa.className = 'control-musica';
@@ -196,13 +199,18 @@ function inicializarMusica() {
     };
     audio.addEventListener('play', actualizar);
     audio.addEventListener('pause', actualizar);
-    controlPausa.addEventListener('click', async () => {
-        if (!audio.paused) { audio.pause(); return; }
+    async function reproducirMusica() {
+        if (!audio.paused) return;
         controlPausa.disabled = true;
         try { await audio.play(); }
         catch (error) {
             controlPausa.textContent = '♫ Reintentar';
             controlPausa.setAttribute('aria-label', 'No se pudo cargar la música. Toca para reintentar');
         } finally { controlPausa.disabled = false; }
+    }
+    controlPausa.addEventListener('click', () => {
+        if (!audio.paused) audio.pause();
+        else reproducirMusica();
     });
+    document.getElementById('btnCarta').addEventListener('click', reproducirMusica);
 }
